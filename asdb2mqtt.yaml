@@ -1,0 +1,60 @@
+# ADSB2MQTT configuration — everything here can be overridden by CLI flags.
+# Run:  python3 adsb2mqtt.py            (picks up this file automatically)
+
+# --- area to watch (adjust to your location) ---
+lat: 60.2
+lon: 24.7
+radius_km: 9            # adsb.lol point search, 1..250 km
+
+# --- adsb.lol ---
+api_url: https://api.adsb.lol
+# api_key:               # optional; see https://adsb.lol for a free key.
+                         # Strongly recommended for 10 s polling: anonymous
+                         # use is limited to 500 requests/DAY (10 s polling
+                         # needs 8640/day). With a key limits are much higher.
+
+# --- loop ---
+interval: 120.0          # seconds between polls (adjustable; also --interval).
+                         # 120 s inside the window below = 480 polls/day,
+                         # fits the anonymous quota. Use 10 with an api_key.
+active_hours: "08:00-24:00"  # local-time polling window; no adsb.lol requests
+                         # outside it (saves the 500/day anonymous quota:
+                         # 16 h at 120 s = 480 polls/day). Supports wrap past
+                         # midnight ("22:00-06:00"). Set to null for 24/7.
+start_enabled: true      # update switch state at boot when the broker has
+                         # no retained switch state. Polling only runs while
+                         # the switch is ON; its state is retained on
+                         # <base_topic>/set_update/state and restored on
+                         # restart. See README "Update switch".
+stale_after: 300.0        # drop aircraft from the list after this many seconds
+                         # without a sighting (keeps the list from flapping)
+max_flights: 50
+
+# --- enrichment (extra fields per flight) ---
+# Airline name + aircraft model name come from bundled offline tables in
+# data/ (rebuild with: python3 refresh_databases.py).
+routes: true             # additionally look up the flight route (origin &
+                         # destination airport names, IATA codes) via the
+                         # free adsbdb.com API. One background lookup per
+                         # new callsign (route_rate apart), cached 12 h in
+                         # data/routes.json. Charters/GA/military often have
+                         # no route there — fields are simply absent.
+# route_rate: 1.2        # min seconds between adsbdb.com requests
+# route_ttl: 43200       # reuse a cached route for 12 h
+
+# --- MQTT broker ---
+mqtt_host: xxx.xxx.xxx.xxx
+mqtt_port: 1883
+mqtt_username:           # leave empty for anonymous
+mqtt_password:
+mqtt_base_topic: homeassistant/sensor/flightradar24_current_in_area
+discovery_prefix: homeassistant  # HA MQTT integration discovery prefix;
+                         # switch config -> <prefix>/switch/<uid>_updates/config
+mqtt_client_id: adsb2mqtt
+mqtt_qos: 0
+mqtt_retain: true
+
+# --- Home Assistant MQTT discovery ---
+unique_id: flightradar24_current_in_area   # -> sensor.flightradar24_current_in_area
+sensor_name: Flightradar24 current in area
+device_name: ADSB2MQTT
