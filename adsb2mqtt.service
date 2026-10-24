@@ -1,0 +1,19 @@
+[Unit]
+Description=ADSB2MQTT - adsb.lol to Home Assistant MQTT sensor
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# adjust user/path to your install
+User=pi
+WorkingDirectory=/home/pi/ADSB2MQTT
+ExecStart=/home/pi/ADSB2MQTT/bin/python3 /home/pi/ADSB2MQTT/adsb2mqtt.py
+Restart=always
+RestartSec=10
+# quick interval changes without editing the unit:
+#   systemctl edit adsb2mqtt  ->  [Service]\n  Environment=ADSB2MQTT_INTERVAL=20
+EnvironmentFile=-/opt/ADSB2MQTT/adsb2mqtt.env
+
+[Install]
+WantedBy=multi-user.target
